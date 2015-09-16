@@ -77,11 +77,15 @@ if __name__ == "__main__":
     now = int(time.time())
 
     fin = fileinput.input(cache_name)
-    for line in fin :
-        parts = line.split("|")
-        cache_time = int(parts[2])
-        if now < cache_time + CacheRecord.expire_delta:
-            cached_state[parts[1]] = CacheRecord(parts[0], cache_time)
+    try:
+        for line in fin :
+            parts = line.split("|")
+            cache_time = int(parts[2])
+            if now < cache_time + CacheRecord.expire_delta:
+                cached_state[parts[1]] = CacheRecord(parts[0], cache_time)
+    except IOError:
+        pass  # Probably doesn't exist
+
     fin.close()
 
     if opts.filename:
@@ -94,7 +98,11 @@ if __name__ == "__main__":
         fout.write(new_state[ip].file_str(ip) + "\n")
     fout.close()
 
-    os.remove(cache_name)
+    try:
+        os.remove(cache_name)
+    except OSError:
+        pass
+
     os.rename(cache_temp, cache_name)
 
 
