@@ -110,7 +110,7 @@ if __name__ == "__main__":
     if opts.filename:
         dbsrc = fileinput.input(opts.filename)
     else:
-        dbsrc = subprocess.check_output(["spamdb"])
+        dbsrc = subprocess.check_output(["spamdb"]).splitlines()
 
     for line in dbsrc:
         parts = line.split("|")
