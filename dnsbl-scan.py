@@ -64,14 +64,16 @@ def spam_lookup (ip, cur_type, record="A"):
 
     # If already in new_state then we have already done anything required
     if ip in new_state:
-        print "Already got new state for", dbg_ip, ":", new_state[ip]
+        if debug:
+            print "Already got new state for", dbg_ip, ":", new_state[ip]
         return
 
     now = int(time.time())
 
     if ip in cached_state:
         this_state = cached_state[ip]
-        print "Cached state for", dbg_ip, ":", this_state
+        if debug:
+            print "Cached state for", dbg_ip, ":", this_state
     else:
         # Need new lookup
         saddr = ip.split(".")
@@ -118,7 +120,7 @@ if __name__ == "__main__":
     debug = opts.debug
 
     # Use mail if not redirected (recommend adding to spamd)
-    syslog.openlog("dnsbl-scan",, syslog.LOG_MAIL)
+    syslog.openlog("dnsbl-scan", 0, syslog.LOG_MAIL)
 
     syslog.syslog(syslog.LOG_DEBUG, "Started")
 
