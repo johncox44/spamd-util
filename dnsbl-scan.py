@@ -114,6 +114,8 @@ if __name__ == "__main__":
     parser.add_option("-f", "--file", action="store", type="string", dest="filename")
     parser.add_option("-n", "--no-trap", action="store_true", dest="no_trap")
     parser.add_option("-d", "--debug", action="store_true", dest="debug")
+    parser.add_option("-c", "--cache-file", type="string",
+                      dest="cache_file", default="/tmp/dnsbl-scan.cache")
     (opts, args) = parser.parse_args(sys.argv[1:])
 
     do_trap = not opts.no_trap
@@ -127,7 +129,7 @@ if __name__ == "__main__":
     if debug:
         print "#<<<", opts, args
 
-    cache_name = "dnsbl-scan.cache"
+    cache_name = opts.cache_file
     cache_temp = cache_name + ".$$$"
 
     now = int(time.time())
