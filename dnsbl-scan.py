@@ -6,6 +6,7 @@ import fileinput
 import time
 import os
 from optparse import OptionParser
+import syslog
 
 cached_state = {}
 new_state = {}
@@ -36,9 +37,12 @@ def do_black (ip):
     global debug
 
     if debug:
-        print "### BLACK", ip
+        print "Add TRAPPED:", ip
+
     if do_trap:
         subprocess.check_call(["spamdb", "-a", "-t", ip])
+
+    syslog.syslog(syslog.LOG_NOTICE, "Add TRAPPED:" + ip)
     return
 
 def spam_lookup (ip, cur_type, record="A"):
@@ -51,7 +55,7 @@ def spam_lookup (ip, cur_type, record="A"):
 
     if cur_type == "TRAPPED":
         if debug:
-            print "### Already trapped", dbg_ip
+            print "Already trapped", dbg_ip
         already_trapped.add(ip)
         return
 
@@ -60,25 +64,25 @@ def spam_lookup (ip, cur_type, record="A"):
 
     # If already in new_state then we have already done anything required
     if ip in new_state:
-        print "### Already got new state for", dbg_ip, ":", new_state[ip]
+        print "Already got new state for", dbg_ip, ":", new_state[ip]
         return
 
     now = int(time.time())
 
     if ip in cached_state:
         this_state = cached_state[ip]
-        print "### Cached state for", dbg_ip, ":", this_state
+        print "Cached state for", dbg_ip, ":", this_state
     else:
         # Need new lookup
         saddr = ip.split(".")
         if len(saddr) != 4:
-            print "### Bad IP4 ", dbg_ip
+            print "Bad IP4 ", dbg_ip
             return
 
         rip = saddr[3] + "." + saddr[2] + "." + saddr[1] + "." + saddr[0] + "." + "zen.spamhaus.org"
 
         if debug:
-            print ">>> [", dbg_ip, "] ", rip
+            print ">>> [" + dbg_ip + "]", rip
 
         dig_out = subprocess.check_output(["dig", "+short", record, rip])
         black_type = 256
@@ -94,7 +98,7 @@ def spam_lookup (ip, cur_type, record="A"):
             this_state = CacheRecord("GREY", now, 0)
 
         if debug:
-            print "### New state for", dbg_ip, ":", this_state
+            print "New state for", dbg_ip, ":", this_state
 
 
     if this_state.state == "BLACK":
@@ -112,6 +116,11 @@ if __name__ == "__main__":
 
     do_trap = not opts.no_trap
     debug = opts.debug
+
+    # Use mail if not redirected (recommend adding to spamd)
+    syslog.openlog("dnsbl-scan",, syslog.LOG_MAIL)
+
+    syslog.syslog(syslog.LOG_DEBUG, "Started")
 
     if debug:
         print "#<<<", opts, args
@@ -157,5 +166,7 @@ if __name__ == "__main__":
         pass
 
     os.rename(cache_temp, cache_name)
+
+    syslog.closelog()
 
 
