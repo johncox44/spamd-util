@@ -7,6 +7,7 @@ import time
 import os
 from optparse import OptionParser
 import syslog
+import socket
 
 cached_state = {}
 new_state = {}
@@ -102,13 +103,21 @@ def spam_lookup (ip, cur_type, record="A"):
         if debug:
             print ">>> [" + dbg_ip + "]", rip
 
-        dig_out = subprocess.check_output(["dig", "+short", record, rip])
+        # Lookup address(es)
+        try:
+            a_list = socket.getaddrinfo(rip, None)
+        except socket.gaierror:
+            a_list = []
+
+        # Find the "worst"
         black_type = 256
-        for a_rec in dig_out.splitlines():
-            if a_rec[0:8] == "127.0.0.":
-                this_black = int(a_rec[8:])
-                if this_black != 0 and this_black < black_type:
-                    black_type = this_black;
+        for (family, socktype, proto, canonname, sockaddr) in a_list:
+            if family == socket.AF_INET:
+                (ip4_addr, ip4_port) = sockaddr
+                if ip4_addr[0:8] == "127.0.0.":
+                    this_black = int(ip4_addr[8:])
+                    if this_black != 0 and this_black < black_type:
+                        black_type = this_black;
 
         if black_type != 256:
             this_state = CacheRecord("BLACK", now, black_type)
