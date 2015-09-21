@@ -14,6 +14,9 @@ black_req = set()
 already_trapped = set()
 do_trap = True
 debug = False
+# Do 5% of whites
+white_inc = 5
+white_acc = 0
 
 class CacheRecord:
     expire_delta = 24 * 60 * 60
@@ -50,6 +53,8 @@ def spam_lookup (ip, cur_type, record="A"):
     global new_state
     global black_req
     global already_trapped
+    global white_acc
+    global white_inc
 
     dbg_ip = ip + "[" + cur_type + "]"
 
@@ -70,12 +75,23 @@ def spam_lookup (ip, cur_type, record="A"):
 
     now = int(time.time())
 
+    # Adjust white % whether or not we have the result cached
+    if cur_type == "WHITE":
+        white_acc -= white_inc
+
     if ip in cached_state:
         this_state = cached_state[ip]
         if debug:
             print "Cached state for", dbg_ip, ":", this_state
     else:
-        # Need new lookup
+        # Only do a % of white lookups - spread the load of validation
+        if cur_type == "WHITE":
+            if white_acc > 0:
+                if debug:
+                    print "Ignore white", dbg_ip
+                return
+            white_acc += 100
+
         saddr = ip.split(".")
         if len(saddr) != 4:
             print "Bad IP4 ", dbg_ip
@@ -116,10 +132,12 @@ if __name__ == "__main__":
     parser.add_option("-d", "--debug", action="store_true", dest="debug")
     parser.add_option("-c", "--cache-file", type="string",
                       dest="cache_file", default="/tmp/dnsbl-scan.cache")
+    parser.add_option("-w", "--white-percent", dest = "white_percent", default=5, type="int")
     (opts, args) = parser.parse_args(sys.argv[1:])
 
     do_trap = not opts.no_trap
     debug = opts.debug
+    white_inc = opts.white_percent
 
     # Use mail if not redirected (recommend adding to spamd)
     syslog.openlog("dnsbl-scan", 0, syslog.LOG_MAIL)
