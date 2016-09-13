@@ -1,0 +1,26 @@
+Spamd-utils
+-----------
+
+Note this is for OpenBSD spamd not spamasassin.
+
+There are two utils here:
+
+dnsbl-scan.py
+-------------
+
+Util that will run over spamd greylists, look up in DNSBL and blacklist
+anything it finds there.  It maintains a cache so it doesn't need to
+look stuff up every time.  Currently hard-coded to zen.spamhaus.org
+
+You wil want a crontab entry like:
+
+*/15    *       *       *       *       /usr/local/bin/dnsbl-scan.py
+
+assuming a spamd whitelist time of >= 20 mins
+
+spfupdate.sh
+------------
+
+Looks up SPF entries for domains and generates an IP list that can be used
+as a table entry in pfctl
+
