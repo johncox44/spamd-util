@@ -1,11 +1,11 @@
-# Siemens
-ip4:134.244.32.85
+# Entries to look up in SPF and whitelist
+#
+# Add names to look up in DNS - see examples below
+# or explicit ip4 addresses
+# ip4:10.0.0.88
+# ip4:10/8 
 # SPF entries
 gmail.com
-ntlworld.com
-virginmedia.com
-virginmedia.co.uk
-cix.co.uk
 hotmail.com
 amazon.co.uk
 facebook.com
